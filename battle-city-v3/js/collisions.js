@@ -101,6 +101,57 @@ atom.declare('BattleCity.Collisions', {
         return false;
     },
 
+    destroyEnemies: function(shape, point) {
+        var shape = shape.clone();
+        shape.move(point); // сначала двигаем клонированный объект, а потом ищем столкновения
+
+        for (i = this.controller.enemies.length; i--;) {
+            enemy = this.controller.enemies[i];
+
+            if (enemy && shape.intersect(enemy.shape)) {
+                console.log('enemies: ' + this.controller.enemies.length);
+                var x = enemy.shape.x;
+                var y = enemy.shape.y;
+                BattleCity.Message(this.controller.info, {
+                    controller: this.controller,
+                    shape: new Rectangle({
+                            from: new Point(x, y),
+                            size: new Size(64, 64)}
+                    ),
+                    value: '100'
+                });
+                enemy.animation.stop();
+                enemy.spawn.isUsed = false;
+                this.controller.enemies.erase(enemy);
+                enemy.destroy();
+                this.controller.score += 100;
+                console.log('score: ' + this.controller.score);
+            }
+        }
+    },
+
+    destroyPlayers: function(shape, point) {
+        var shape = shape.clone();
+        shape.move(point); // сначала двигаем клонированный объект, а потом ищем столкновения
+
+        for (i = this.controller.players.length; i--;) {
+            player = this.controller.players[i];
+
+            if (player.shape.intersect(shape)) {
+                player.animation.stop();
+                player.spawn.isUsed = false;
+                this.controller.players.erase(player);
+                this.controller.playerLives--;
+                player.destroy();
+
+                if (this.controller.playerLives == 0) {
+                    this.controller.endGame = true;
+                    this.controller.game.endGameMessage();
+                }
+            }
+        }
+    },
+
     // рушим стены
     destroyWalls: function(shape, point, angle) {
         var shape = shape.clone();

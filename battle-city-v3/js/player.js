@@ -20,10 +20,7 @@ atom.declare('BattleCity.Player', App.Element, {
         // для первой отрисовки танка берем нулевой кадр анимации
         this.image = this.animation.get(0);
 
-        // задаем стартовые координаты танка
-        this.shape = new Rectangle(
-            128, this.size.height-32, 32, 32
-        );
+        this.spawn = this.settings.get('spawn');
 
         this.halfWidth = this.shape.width * 0.5;
     },
@@ -49,6 +46,8 @@ atom.declare('BattleCity.Player', App.Element, {
             keyboard = atom.Keyboard(),
             controls = this.settings.get('controls');
 
+        if(!this.controller.endGame) {
+
         // проверяем нажатия клавиш и двигаем/поворачиваем танк
         if (keyboard.key(controls.up)) {
             this.move(0, -this.speed*time);
@@ -62,6 +61,8 @@ atom.declare('BattleCity.Player', App.Element, {
 
         if (keyboard.key(controls.fire)) {
             this.shot(time);
+        }
+
         }
     },
 
@@ -134,7 +135,8 @@ atom.declare('BattleCity.Player', App.Element, {
 
         // можно ехать
         if (!this.controller.collisions.checkCollisionWithTextures(this.shape, new Point(x, y))
-            && !this.controller.collisions.checkOutOfTheField(this.shape, new Point(x, y))) {
+            && !this.controller.collisions.checkOutOfTheField(this.shape, new Point(x, y))
+            && !this.controller.collisions.checkCollisionWithEnemies(this.shape, new Point(x, y), this)) {
             this.shape.move(new Point(x, y));
         }
 

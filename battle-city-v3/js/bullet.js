@@ -43,10 +43,17 @@ atom.declare('BattleCity.Bullet', App.Element, {
         this.redraw();
 
         var collisionWithTextures = this.controller.collisions.checkCollisionWithTextures(this.shape, new Point(x, y));
+        var collisionWithEnemies = this.controller.collisions.checkCollisionWithEnemies(this.shape, new Point(x, y));
+        var collisionWithPlayers = this.controller.collisions.checkCollisionWithPlayers(this.shape, new Point(x, y));
+        var collisionWithBullets = this.controller.collisions.checkCollisionWithBullets(this.shape, new Point(x, y), this);
         var outOfTheField = this.controller.collisions.checkOutOfTheField(this.shape, new Point(x, y));
 
         // считаем коллизию с пределами поля
-        if (outOfTheField || collisionWithTextures) {
+        if (outOfTheField ||
+            collisionWithTextures ||
+            collisionWithEnemies ||
+            collisionWithPlayers ||
+            collisionWithBullets) {
 
             if (collisionWithTextures) {
                 if (!(collisionWithTextures instanceof BattleCity.Breaks)) { //добавочное смещение для поврежденной стены
@@ -61,7 +68,12 @@ atom.declare('BattleCity.Bullet', App.Element, {
 
             this.controller.collisions.destroyWalls(this.shape, new Point(x, y), this.angle);
 
-            this.settings.get('player').bullets--;
+            if (this.source instanceof BattleCity.Player) {
+                this.settings.get('player').bullets--;
+                this.controller.collisions.destroyEnemies(this.shape, new Point(x, y));
+            } else if (this.source instanceof BattleCity.Enemy) {
+                this.controller.collisions.destroyPlayers(this.shape, new Point(x, y));
+            }
 
             // создаем инстанс взрыва
             new BattleCity.Explosion(this.controller.units, {
@@ -76,6 +88,9 @@ atom.declare('BattleCity.Bullet', App.Element, {
             });
 
             // уничтожаем инстанс пули
+            if (this.source instanceof BattleCity.Enemy) {
+                this.controller.enemyBullets.erase(this);
+            }
             this.destroy();
         }
     }

@@ -2,9 +2,12 @@
 atom.declare( 'BattleCity.Controller', {
 
     textures: [],
+    enemies: [],
     players: [],
+    enemyBullets: [],
     endGame: false,
     playerLives: 3,
+    score: 0,
 
     initialize: function () {
         atom.ImagePreloader.run({
@@ -88,6 +91,46 @@ atom.declare( 'BattleCity.Controller', {
             controller: this,
             spawnTimeOut: 1000,
             type: 'player'
+        });
+
+        BattleCity.Spawn(this.units, {
+            size: this.size,
+            images: images,
+            shape: new Rectangle(192, 0, 32, 32),
+            angle: 270,
+            controller: this,
+            spawnTimeOut: 0,
+            type: 'enemy'
+        });
+
+        BattleCity.Spawn(this.units, {
+            size: this.size,
+            images: images,
+            shape: new Rectangle(64, 0, 32, 32),
+            angle: 0,
+            controller: this,
+            spawnTimeOut: 5000,
+            type: 'enemy'
+        });
+
+        BattleCity.Spawn(this.units, {
+            size: this.size,
+            images: images,
+            shape: new Rectangle(128, 0, 32, 32),
+            angle: 90,
+            controller: this,
+            spawnTimeOut: 10000,
+            type: 'enemy'
+        });
+
+        BattleCity.Spawn(this.units, {
+            size: this.size,
+            images: images,
+            shape: new Rectangle(32, 0, 32, 32),
+            angle: 270,
+            controller: this,
+            spawnTimeOut: 15000,
+            type: 'enemy'
         });
 
 //        // координатная сетка (для дебага)

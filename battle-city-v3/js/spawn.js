@@ -15,7 +15,10 @@ atom.declare('BattleCity.Spawn', App.Element, {
     onUpdate: function(time) {
 
         var now = Date.now();
-        if (now > this.timeCreated + this.spawnTimeOut && !this.isUsed) {
+        if (now > this.timeCreated + this.spawnTimeOut && !this.isUsed
+            && !this.controller.collisions.checkCollisionWithPlayers(this.shape, new Point(0, 0))
+            && !this.controller.collisions.checkCollisionWithEnemies(this.shape, new Point(0, 0))
+            ) {
             this.amount--;
             this.isUsed = true;
             this.timeCreated = now + this.spawnTimeOut;
