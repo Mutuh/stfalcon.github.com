@@ -1,7 +1,9 @@
 atom.declare('BattleCity.Player', App.Element, {
-    speed: 0.09, // скорость перемещения игрока
+    speed: 0.1, // скорость перемещения игрока
     angle: 0, // угол поворота спрайта
-    bullets: 0,
+    bullets: 0, // кол-во пуль, которые остались
+    rateOfFire: 1, // относительная частота выстрелов
+    lastShot: 0, // время последнего выстрела
 
     configure: function () {
         // анимация движения гусениц танка
@@ -18,10 +20,9 @@ atom.declare('BattleCity.Player', App.Element, {
         // для первой отрисовки танка берем нулевой кадр анимации
         this.image = this.animation.get(0);
 
-        // задаем стартовые координаты танка
-        this.shape = new Rectangle(
-            128, this.size.height-32, 32, 32
-        );
+        this.spawn = this.settings.get('spawn');
+
+        this.halfWidth = this.shape.width * 0.5;
     },
 
     get controller () {
@@ -33,7 +34,6 @@ atom.declare('BattleCity.Player', App.Element, {
     },
 
     renderTo: function (ctx, resources) {
-//        ctx.fill(this.shape, 'indigo');
         ctx.drawImage({
             image : this.image,
             center: this.shape.center,
@@ -45,6 +45,8 @@ atom.declare('BattleCity.Player', App.Element, {
         var
             keyboard = atom.Keyboard(),
             controls = this.settings.get('controls');
+
+        if(!this.controller.endGame) {
 
         // проверяем нажатия клавиш и двигаем/поворачиваем танк
         if (keyboard.key(controls.up)) {
@@ -60,16 +62,24 @@ atom.declare('BattleCity.Player', App.Element, {
         if (keyboard.key(controls.fire)) {
             this.shot(time);
         }
+
+        }
     },
 
     // стреляем
     shot: function (time) {
-        if (!this.bullets) { // пока стреляем по одной пуле
-            var x = this.angle == 90 ? this.shape.center.x + 16
-                : this.angle == 270 ? this.shape.center.x - 16
+        var now = Date.now();
+
+        if (now > this.lastShot + this.rateOfFire * 1000
+            && !this.bullets) {
+
+            this.lastShot = now;
+
+            var x = this.angle == 90 ? this.shape.center.x + this.halfWidth
+                : this.angle == 270 ? this.shape.center.x - this.halfWidth
                 : this.shape.center.x;
-            var y = this.angle == 0 ? this.shape.center.y - 16
-                : this.angle == 180 ? this.shape.center.y + 16
+            var y = this.angle == 0 ? this.shape.center.y - this.halfWidth
+                : this.angle == 180 ? this.shape.center.y + this.halfWidth
                 : this.shape.center.y;
 
             var bullet = new BattleCity.Bullet(this.controller.units, {
@@ -108,20 +118,25 @@ atom.declare('BattleCity.Player', App.Element, {
         if (this.angle == 0 && (angle == 270 || angle == 90)) {
             // двигается снизу вверх и поворачивает налево-направо
             y -= this.shape.center.y - Math.round(this.shape.center.y / 16) * 16;
+            x = 0;
         } else if (this.angle == 180 && (angle == 270 || angle == 90)) {
             // двигается сверху вниз и поворачивает налево-направо
             y += Math.round(this.shape.center.y / 16) * 16 - this.shape.center.y;
+            x = 0;
         } else if (this.angle == 90 && (angle == 0 || angle == 180)) {
             // двигает слева направо и поворачивает вниз-вверх
             x += Math.round(this.shape.center.x / 16) * 16 - this.shape.center.x;
+            y = 0;
         } else if (this.angle == 270 && (angle == 0 || angle == 180)) {
             // двигается справа налево и поворачивает вниз-вверх
             x -= this.shape.center.x - Math.round(this.shape.center.x / 16) * 16;
+            y = 0;
         }
 
         // можно ехать
-        if (!this.checkCollisionWithTextures(this.shape, new Point(x, y))
-            && !this.checkOutOfTheField(this.shape, new Point(x, y))) {
+        if (!this.controller.collisions.checkCollisionWithTextures(this.shape, new Point(x, y))
+            && !this.controller.collisions.checkOutOfTheField(this.shape, new Point(x, y))
+            && !this.controller.collisions.checkCollisionWithEnemies(this.shape, new Point(x, y), this)) {
             this.shape.move(new Point(x, y));
         }
 
@@ -129,46 +144,6 @@ atom.declare('BattleCity.Player', App.Element, {
         this.angle = angle;
 
         this.redraw();
-    },
-
-    // проверяем выезд за границы игрового поля
-    checkOutOfTheField: function(shape, point) {
-        var shape = shape.clone();
-        shape.move(point); // сначала двигаем клонированный объект, а потом ищем столкновения
-
-        var top = shape.from.y,
-            bottom = shape.to.y - this.controller.size.height,
-            left = shape.from.x,
-            right = shape.to.x - this.controller.size.width;
-
-        if (top < 0 || bottom > 0 || left < 0 || right > 0) {
-            return true;
-        }
-
-        return false;
-    },
-
-    // проверяем колизии с текстурами
-    checkCollisionWithTextures: function(shape, point) {
-        var shape = shape.clone();
-        shape.move(point); // сначала двигаем клонированный объект, а потом ищем столкновения
-
-        for (i = this.controller.textures.length; i--;) {
-            field = this.controller.textures[i];
-
-            if (field.shape.intersect(shape)) {
-                if (field instanceof BattleCity.Trees) {
-                    return false;
-                }
-                if (field instanceof BattleCity.Asphalt) {
-                    return false;
-                }
-
-                return true;
-            }
-        }
-
-        return false;
     }
 
 });
