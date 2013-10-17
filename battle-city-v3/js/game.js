@@ -18,7 +18,9 @@ atom.declare('BattleCity.Game', {
 //            item instanceof BattleCity.Enemy ? this.enemies :
             item instanceof BattleCity.Player ? this.players : null;
 
-        if (a == null) throw new TypeError( 'unknown type of ' + item );
+        if (a === null) {
+            throw new TypeError( 'unknown type of ' + item );
+        }
 
         return a;
     },
@@ -38,4 +40,16 @@ atom.declare('BattleCity.Game', {
 //        this.shipsAsteroids();
 //        this.bulletsAsteroids();
     },
+    endGameMessage : function() {
+        var gameOverMessage = new BattleCity.GameOverMessage(this.controller.info, {
+            controller: this.controller,
+            shape: new Rectangle({
+                    from: new Point(175, 350),
+                    size: new Size(64, 40)}
+            )
+        });
+    },
+    gameRestart : function() {
+        location.reload();
+    }
 });
